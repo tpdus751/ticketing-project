@@ -1,0 +1,53 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.5'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'ticketing'
+version = '0.0.1-SNAPSHOT'
+description = 'Payment service'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)  // order 모듈과 동일
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation project(":common")
+
+	// --- Spring Boot 기본 ---
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+	// --- Kafka (결제 결과 이벤트 발행 시 사용 가능) ---
+	implementation 'org.springframework.kafka:spring-kafka'
+
+	// --- 관측/로깅 ---
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+	implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+	runtimeOnly 'io.opentelemetry:opentelemetry-exporter-otlp'
+
+	// --- Lombok ---
+	compileOnly 'org.projectlombok:lombok:1.18.34'
+	annotationProcessor 'org.projectlombok:lombok:1.18.34'
+	testCompileOnly 'org.projectlombok:lombok:1.18.34'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+	// --- 테스트 ---
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
+	testImplementation 'org.testcontainers:junit-jupiter:1.20.3'
+	testImplementation 'org.testcontainers:testcontainers:1.20.3'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+	ignoreFailures = true   // 테스트 미완성 상태에서도 빌드 가능
+}

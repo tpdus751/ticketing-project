@@ -1,0 +1,1 @@
+ALTER TABLE outbox ADD COLUMN trace_id VARCHAR(255);

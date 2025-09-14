@@ -1,0 +1,76 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.5'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.flywaydb.flyway' version '10.20.1'
+}
+
+group = 'ticketing'
+version = '0.0.1-SNAPSHOT'
+description = 'Order service'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation project(":common")
+
+	// --- Spring Boot 기본 ---
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+	// --- DB (MySQL + JPA + Flyway) ---
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.flywaydb:flyway-core:10.20.1'
+	implementation 'org.flywaydb:flyway-mysql:10.20.1'
+	runtimeOnly 'com.mysql:mysql-connector-j:8.0.33'
+
+	// --- Kafka ---
+	implementation 'org.springframework.kafka:spring-kafka'
+
+	// --- 관측/로깅 ---
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+	implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+	runtimeOnly 'io.opentelemetry:opentelemetry-exporter-otlp'
+
+	// --- Lombok ---
+	compileOnly 'org.projectlombok:lombok:1.18.34'
+	annotationProcessor 'org.projectlombok:lombok:1.18.34'
+	testCompileOnly 'org.projectlombok:lombok:1.18.34'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+	// --- 테스트 ---
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
+	testImplementation 'org.testcontainers:junit-jupiter:1.20.3'
+	testImplementation 'org.testcontainers:mysql:1.20.3'
+	testImplementation 'org.testcontainers:jdbc:1.20.3'
+	testImplementation 'org.testcontainers:testcontainers:1.20.3'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+configurations {
+	flywayMigration
+}
+dependencies {
+	flywayMigration 'com.mysql:mysql-connector-j:8.0.33'
+}
+
+flyway {
+	url = 'jdbc:mysql://localhost:3306/ticketing'
+	user = 'ticket'
+	password = 'ticketpw'
+	schemas = ['ticketing']
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+	ignoreFailures = true
+}

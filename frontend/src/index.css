@@ -1,0 +1,45 @@
+/* src/index.css */
+@import "tailwindcss";
+
+/* ===== Theme tokens ===== */
+:root {
+  --bg: #0a0a0a;
+  --surface: #111214;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --primary: #22c55e;
+  --warn: #f59e0b;
+  --sold: #737373;
+  --seat-size: clamp(18px, 2.2vw, 24px);
+
+  color-scheme: dark;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 레이아웃 기본 */
+html, body, #root { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); }
+
+/* 링크 */
+a { color: #8b93ff; text-decoration: none; }
+a:hover { color: #a5adff; }
+
+/* 전역 버튼 리셋 (패딩/배경만 제거, 색상은 Tailwind에 맡김) */
+button {
+  font: inherit;
+  border: none;
+  background: greenz;    /* ← 좌석 버튼 기본 배경 제거 */
+  padding: 0;          /* ← 전역 padding 제거 */
+  cursor: pointer;
+}
+button:focus { outline: none; }
+
+/* (선택) 라이트 모드 */
+@media (prefers-color-scheme: light) {
+  body { background: #ffffff; color: #213547; }
+}

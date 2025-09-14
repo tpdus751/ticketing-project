@@ -1,0 +1,28 @@
+# macOS / Windows 시스템 파일
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Node / React
+frontend/node_modules/
+frontend/dist/
+
+# Gradle
+.gradle/
+build/
+*.log
+
+# Spring Boot temp
+ticketing/**/build/
+ticketing/**/out/
+ticketing/**/target/
+
+# Docker/MySQL 데이터 (절대 올리면 안 됨)
+ticketing/infra/mysql-data/
+ticketing/infra/redis-data/
+
+# 기타
+*.hprof

@@ -1,0 +1,35 @@
+-- 이벤트
+CREATE TABLE IF NOT EXISTS events (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(200) NOT NULL,
+  description TEXT NULL,
+  date_time DATETIME NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 좌석
+CREATE TABLE IF NOT EXISTS seats (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  event_id BIGINT NOT NULL,
+  row_no INT NOT NULL,
+  col_no INT NOT NULL,
+  price INT NOT NULL,
+  status ENUM('AVAILABLE','HELD','SOLD') NOT NULL DEFAULT 'AVAILABLE',
+  UNIQUE KEY uk_event_seat (event_id, row_no, col_no),
+  CONSTRAINT fk_seat_event FOREIGN KEY (event_id) REFERENCES events(id)
+) ENGINE=InnoDB;
+
+-- 샘플 이벤트 3개
+INSERT INTO events (title, description, date_time) VALUES
+('Ultra Concert 2025', '메가 콘서트',       DATE_ADD(NOW(), INTERVAL 15 DAY)),
+('Indie Fest',        '인디 라인업',        DATE_ADD(NOW(), INTERVAL 20 DAY)),
+('Classic Night',     '오케스트라의 밤',     DATE_ADD(NOW(), INTERVAL 25 DAY));
+
+-- 각 이벤트당 10x10 좌석, 가격은 열에 따라 가중
+INSERT INTO seats(event_id, row_no, col_no, price)
+SELECT e.id, r.c, c.c, 50000 + c.c*1000
+FROM events e
+JOIN (SELECT 1 c UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
+      UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10) r
+JOIN (SELECT 1 c UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
+      UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10) c;
