@@ -8,7 +8,7 @@ spring:
     admin:
       properties:
         auto.create.topics.enable: true
-    bootstrap-servers: kafka:9092
+    bootstrap-servers: kafka:29092
     consumer:
       group-id: reservation-service
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer

@@ -62,7 +62,7 @@ public class SagaWorker {
 
                             // 2. Payment 모듈 호출
                             ResponseEntity<PaymentResponse> resp = restTemplate.postForEntity(
-                                    "http://localhost:8083/ticketing/api/payments/authorize",
+                                    "http://payment:8083/ticketing/api/payments/authorize",
                                     entity,
                                     PaymentResponse.class
                             );
