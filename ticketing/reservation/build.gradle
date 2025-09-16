@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.5'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'com.google.cloud.tools.jib' version '3.4.1'
 }
 
 group = 'ticketing'
@@ -10,7 +11,7 @@ description = 'Demo project for Spring Boot'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
 
@@ -50,6 +51,18 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 	// Gradle 8 이상에서는 아래 옵션으로 대체
-	ignoreFailures = true   // 테스트가 없어도 빌드 실패하지 않음
+	ignoreFailures = false   // 테스트가 없어도 빌드 실패하지 않음
 }
 
+jib {
+    from {
+        image = 'eclipse-temurin:17-jre'
+    }
+    to {
+        image = "ghcr.io/tpdus751/reservation:latest"
+    }
+    container {
+        jvmFlags = ['-Dspring.profiles.active=prod']
+        ports = ['8081']
+    }
+}

@@ -3,7 +3,7 @@ spring:
     name: payment-api   # Jaeger, Prometheus에서 구분하기 위해 서비스명 지정
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: kafka:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -28,7 +28,7 @@ management:
       name: payment-api   # spring.application.name 못 읽는 상황 대비
   otlp:
     tracing:
-      endpoint: http://localhost:4318/v1/traces   # Jaeger all-in-one
+      endpoint: http://jaeger:4318/v1/traces   # Jaeger all-in-one
 
 server:
   port: 8083   # order(8082), reservation(8081), catalog(8080)와 충돌하지 않게

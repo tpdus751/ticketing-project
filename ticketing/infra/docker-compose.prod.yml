@@ -1,0 +1,130 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ticketing-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql:/var/lib/mysql
+
+  redis:
+    image: redis:7
+    container_name: ticketing-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis:/data
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: ticketing-jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+
+  prometheus:
+    image: prom/prometheus
+    container_name: ticketing-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - jaeger
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana
+    container_name: ticketing-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
+  catalog:
+    image: ghcr.io/tpdus751/catalog:latest
+    container_name: catalog
+    env_file: .env
+    depends_on:
+      - mysql
+      - redis
+      - kafka
+
+  reservation:
+    image: ghcr.io/tpdus751/reservation:latest
+    container_name: reservation
+    env_file: .env
+    depends_on:
+      - mysql
+      - redis
+      - kafka
+
+  order:
+    image: ghcr.io/tpdus751/order:latest
+    container_name: order
+    env_file: .env
+    depends_on:
+      - mysql
+      - kafka
+
+  payment:
+    image: ghcr.io/tpdus751/payment:latest
+    container_name: payment
+    env_file: .env
+    depends_on:
+      - kafka
+
+  nginx:
+    image: nginx:1.27
+    container_name: ticketing-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /dev/null:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - catalog
+      - reservation
+      - order
+      - payment
+
+volumes:
+  mysql:
+  redis:

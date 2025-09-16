@@ -2,25 +2,22 @@ spring:
   application:
     name: order-api
   datasource:
-    url: jdbc:mysql://localhost:3306/ticketing
+    url: jdbc:mysql://mysql:3306/ticketing
     username: ticket
     password: ticketpw
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update   # Flyway가 스키마 관리
+      ddl-auto: none
     properties:
       hibernate:
         format_sql: true
         show_sql: true
-        jdbc:
-          time_zone: Asia/Seoul
-  flyway:
-    enabled: true
-    locations: filesystem:../infra/flyway/migration
+    jdbc:
+      time_zone: Asia/Seoul
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: kafka:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -31,13 +28,18 @@ spring:
 
 management:
   endpoints:
-    web.exposure.include: health,info,metrics,prometheus
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
   tracing:
     enabled: true
-    sampling.probability: 1.0
-    service.name: order-api
+    sampling:
+      probability: 1.0
+    service:
+      name: order-api
   otlp:
-    tracing.endpoint: http://localhost:4318/v1/traces
+    tracing:
+      endpoint: http://jaeger:4318/v1/traces
 
 server:
   port: 8082

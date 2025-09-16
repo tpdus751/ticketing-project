@@ -2,8 +2,9 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.5'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'com.google.cloud.tools.jib' version '3.4.1'
 }
-
+	
 group = 'ticketing'
 version = '0.0.1-SNAPSHOT'
 description = 'Payment service'
@@ -49,5 +50,18 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
-	ignoreFailures = true   // 테스트 미완성 상태에서도 빌드 가능
+	ignoreFailures = false   // 테스트 미완성 상태에서도 빌드 가능
+}
+
+jib {
+    from {
+        image = 'eclipse-temurin:17-jre'
+    }
+    to {
+        image = "ghcr.io/tpdus751/payment:latest"
+    }
+    container {
+        jvmFlags = ['-Dspring.profiles.active=prod']
+        ports = ['8083']
+    }
 }

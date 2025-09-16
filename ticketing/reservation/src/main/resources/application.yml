@@ -8,23 +8,23 @@ spring:
     admin:
       properties:
         auto.create.topics.enable: true
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: kafka:9092
     consumer:
       group-id: reservation-service
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   data:
     redis:
-      host: localhost
+      host: redis
       port: 6379
   datasource:
-    url: jdbc:mysql://localhost:3306/ticketing
+    url: jdbc:mysql://mysql:3306/ticketing
     username: ticket
     password: ticketpw
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: none   # ✅ Hibernate가 테이블 생성/수정하지 않도록
     properties:
       hibernate:
         format_sql: true
@@ -48,7 +48,7 @@ management:
       name: reservation-api
   otlp:
     tracing:
-      endpoint: http://localhost:4318/v1/traces
+      endpoint: http://jaeger:4318/v1/traces
 
 server:
   port: 8081

@@ -1,81 +1,71 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.5.5'
-	id 'io.spring.dependency-management' version '1.1.7'
-	id 'org.flywaydb.flyway' version '10.20.1'
+    id 'java'
+    id 'org.springframework.boot' version '3.5.5'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.google.cloud.tools.jib' version '3.4.1'
 }
 
 group = 'ticketing'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
 
-	implementation project(":common")
+    implementation project(":common")
 
-	implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 
-	implementation 'org.flywaydb:flyway-core:10.20.1'
-	implementation 'org.flywaydb:flyway-mysql:10.20.1'
+    runtimeOnly 'com.mysql:mysql-connector-j:8.0.33'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
-	runtimeOnly 'com.mysql:mysql-connector-j:8.0.33'
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+    testCompileOnly 'org.projectlombok:lombok:1.18.34'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
 
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.testcontainers:mysql:1.20.3'
+    testImplementation 'org.testcontainers:jdbc:1.20.3'
 
-	compileOnly 'org.projectlombok:lombok:1.18.34'
-	annotationProcessor 'org.projectlombok:lombok:1.18.34'
-	testCompileOnly 'org.projectlombok:lombok:1.18.34'
-	testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+    // 🧪 선택: Redis 통합테스트
+    testImplementation 'org.testcontainers:junit-jupiter:1.20.3'
+    testImplementation 'org.testcontainers:testcontainers:1.20.3'
 
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	testImplementation 'org.testcontainers:mysql:1.20.3'
-	testImplementation 'org.testcontainers:jdbc:1.20.3'
-
-	// 🧪 선택: Testcontainers로 Redis 통합테스트 시
-	testImplementation 'org.testcontainers:junit-jupiter:1.20.3'
-	testImplementation 'org.testcontainers:testcontainers:1.20.3'
-
-	// 📈 선택: 관측성(OTLP) 쓸 때
-	implementation 'org.springframework.boot:spring-boot-starter-aop'   // <-- 추가
-	implementation 'io.micrometer:micrometer-tracing-bridge-otel'
-	runtimeOnly 'io.opentelemetry:opentelemetry-exporter-otlp'
-
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-// ✅ Gradle Flyway plugin이 사용할 classpath에 MySQL 드라이버 추가
-configurations {
-	flywayMigration
-}
-dependencies {
-	flywayMigration 'com.mysql:mysql-connector-j:8.0.33'
-}
-
-flyway {
-	url = 'jdbc:mysql://localhost:3306/ticketing'
-	user = 'ticket'
-	password = 'ticketpw'
-	schemas = ['ticketing']
+    // 📈 관측성
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    runtimeOnly 'io.opentelemetry:opentelemetry-exporter-otlp'
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
-	// Gradle 8 이상에서는 아래 옵션으로 대체
-	ignoreFailures = true   // 테스트가 없어도 빌드 실패하지 않음
+    useJUnitPlatform()
+    ignoreFailures = false
+}
+
+jib {
+    from {
+        image = 'eclipse-temurin:17-jre'
+    }
+    to {
+        image = "ghcr.io/tpdus751/catalog:latest"
+    }
+    container {
+        jvmFlags = ['-Dspring.profiles.active=prod']
+        ports = ['8080']
+    }
 }
