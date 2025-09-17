@@ -1,6 +1,8 @@
 package ticketing.catalog.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.data.redis.core.StringRedisTemplate; // ✅ 추가
 import org.springframework.stereotype.Service;
 import ticketing.catalog.entity.Seat;
@@ -13,13 +15,19 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SeatQueryService {
     private final SeatRepository seatRepository;
     private final StringRedisTemplate redis; // ✅ 주입
 
     public SeatMap getSeats(Long eventId) {
+        String traceId = MDC.get("traceId");
+        log.info("[SEAT-QUERY] 좌석 조회 시작 eventId={} traceId={}", eventId, traceId);
         List<Seat> entities = seatRepository.findByEventIdOrderByRowNoAscColNoAsc(eventId);
-        if (entities.isEmpty()) throw new EventNotFoundException(eventId.toString());
+        if (entities.isEmpty()) {
+            log.warn("[SEAT-QUERY] 조회 실패 - 이벤트 없음 eventId={} traceId={}", eventId, traceId);
+            throw new EventNotFoundException(eventId.toString());
+        }
 
         int rows = entities.stream().map(Seat::getRowNo).max(Comparator.naturalOrder()).orElse(0);
         int cols = entities.stream().map(Seat::getColNo).max(Comparator.naturalOrder()).orElse(0);
@@ -41,6 +49,8 @@ public class SeatQueryService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
+        log.debug("[SEAT-QUERY] Redis held 좌석 수={} traceId={}", heldIds.size(), traceId);
+
         List<SeatDto> seats = entities.stream()
                 .map(s -> {
                     String status = s.getStatus().name(); // AVAILABLE/SOLD
@@ -57,6 +67,9 @@ public class SeatQueryService {
                     );
                 })
                 .toList();
+
+        log.info("[SEAT-QUERY] 좌석 조회 완료 eventId={} totalSeats={} traceId={}",
+                eventId, seats.size(), traceId);
 
         return new SeatMap(rows, cols, seats);
     }

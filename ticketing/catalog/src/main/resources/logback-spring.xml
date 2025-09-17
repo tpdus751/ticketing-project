@@ -2,7 +2,7 @@
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>
-                %d{HH:mm:ss.SSS} %highlight(%-5level) [%thread]
+                %d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%thread]
                 [%green(CATALOG)] trace=%X{traceId:-NA} %cyan(%logger{36}) - %msg%n
             </pattern>
         </encoder>
