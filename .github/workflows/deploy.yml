@@ -67,10 +67,10 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}    # pem 파일 내용
           script: |
-            script: |
             cd /srv/ticketing/ticketing-project
             git fetch origin
             git checkout main
             git pull origin main   
+            cd ticketing/infra
             sudo docker compose pull
             sudo docker compose -f docker-compose.prod.yml up -d
