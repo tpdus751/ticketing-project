@@ -22,7 +22,7 @@ jobs:
       # 3. Reservation 모듈 빌드 & 푸시
       - name: Build & Push Reservation Image
         run: |
-          cd ticketing/reservation
+          cd ticketing
           ./gradlew jib \
             -Djib.to.image=ghcr.io/tpdus751/reservation:latest \
             -Djib.to.auth.username=tpdus751 \
@@ -32,7 +32,7 @@ jobs:
       # 4. Order 모듈 빌드 & 푸시
       - name: Build & Push Order Image
         run: |
-          cd ticketing/order
+          cd ticketing
           ./gradlew jib \
             -Djib.to.image=ghcr.io/tpdus751/order:latest \
             -Djib.to.auth.username=tpdus751 \
@@ -42,7 +42,7 @@ jobs:
       # 5. Payment 모듈 빌드 & 푸시
       - name: Build & Push Payment Image
         run: |
-          cd ticketing/payment
+          cd ticketing
           ./gradlew jib \
             -Djib.to.image=ghcr.io/tpdus751/payment:latest \
             -Djib.to.auth.username=tpdus751 \
@@ -52,7 +52,7 @@ jobs:
       # 6. Catalog 모듈 빌드 & 푸시
       - name: Build & Push Catalog Image
         run: |
-          cd ticketing/catalog
+          cd ticketing
           ./gradlew jib \
             -Djib.to.image=ghcr.io/tpdus751/catalog:latest \
             -Djib.to.auth.username=tpdus751 \
