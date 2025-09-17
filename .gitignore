@@ -26,3 +26,5 @@ ticketing/infra/redis-data/
 
 # 기타
 *.hprof
+
+frontend/.env.development
