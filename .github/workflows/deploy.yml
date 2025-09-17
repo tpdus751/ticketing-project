@@ -23,7 +23,7 @@ jobs:
       - name: Build & Push Reservation Image
         run: |
           cd ticketing
-          ./gradlew jib \
+          ./gradlew :reservation:jib \
             -Djib.to.image=ghcr.io/tpdus751/reservation:latest \
             -Djib.to.auth.username=tpdus751 \
             -Djib.to.auth.password=${{ secrets.GHCR_TOKEN }} \
@@ -33,7 +33,7 @@ jobs:
       - name: Build & Push Order Image
         run: |
           cd ticketing
-          ./gradlew jib \
+          ./gradlew :order:jib \
             -Djib.to.image=ghcr.io/tpdus751/order:latest \
             -Djib.to.auth.username=tpdus751 \
             -Djib.to.auth.password=${{ secrets.GHCR_TOKEN }} \
@@ -43,7 +43,7 @@ jobs:
       - name: Build & Push Payment Image
         run: |
           cd ticketing
-          ./gradlew jib \
+          ./gradlew :payment:jib \
             -Djib.to.image=ghcr.io/tpdus751/payment:latest \
             -Djib.to.auth.username=tpdus751 \
             -Djib.to.auth.password=${{ secrets.GHCR_TOKEN }} \
@@ -53,7 +53,7 @@ jobs:
       - name: Build & Push Catalog Image
         run: |
           cd ticketing
-          ./gradlew jib \
+          ./gradlew :reservation:catalog \
             -Djib.to.image=ghcr.io/tpdus751/catalog:latest \
             -Djib.to.auth.username=tpdus751 \
             -Djib.to.auth.password=${{ secrets.GHCR_TOKEN }} \
@@ -72,5 +72,5 @@ jobs:
             git checkout main
             git pull origin main   
             cd ticketing/infra
-            sudo docker compose pull
+            sudo docker compose -f docker-compose.prod.yml pull
             sudo docker compose -f docker-compose.prod.yml up -d
