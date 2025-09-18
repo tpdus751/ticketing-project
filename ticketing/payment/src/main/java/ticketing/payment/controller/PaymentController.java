@@ -31,9 +31,6 @@ public class PaymentController {
         String traceId = (String) http.getAttribute(TraceIdFilter.HEADER);
 
         // 1. 랜덤 지연 (500 ~ 1500ms 사이) -> 실제 PG 네트워크 지연 흉내
-        try {
-            Thread.sleep(500 + random.nextInt(1000));
-        } catch (InterruptedException ignored) {}
 
         // 2. 80% 성공, 20% 실패 시뮬레이션
         boolean success = random.nextDouble() < 0.8;

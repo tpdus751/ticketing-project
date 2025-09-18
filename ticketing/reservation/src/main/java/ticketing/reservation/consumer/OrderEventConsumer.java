@@ -85,12 +85,10 @@ public class OrderEventConsumer {
             } catch (Exception e) {
                 obsSpan.error(e);
                 obsSpan.stop();
-                log.error("[CONSUME] Failed to parse/handle message={}", record, e);
-                kafkaTemplate.send("order.events.DLQ", record.value());
+                log.warn("[CONSUME] Failed to parse/handle message={}", record, e);
             }
         } catch (Exception e) {
-            log.error("[CONSUME] Unexpected error processing record={}", record, e);
-            kafkaTemplate.send("order.events.DLQ", record.value());
+            log.warn("[CONSUME] Unexpected error processing record={}", record, e);
         }
     }
 

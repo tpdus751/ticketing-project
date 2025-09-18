@@ -6,6 +6,12 @@ spring:
     username: ticket
     password: ticketpw
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 30      # 동시 커넥션 상한 (서버 CPU/메모리 고려해서 30~50 추천)
+      minimum-idle: 10           # 최소 유지 커넥션
+      idle-timeout: 30000        # 30초동안 안 쓰면 정리
+      max-lifetime: 1800000      # 30분 지나면 재생성
+      connection-timeout: 2000   # 풀에서 커넥션 못 빌리면 2초만 대기 후 예외
   jpa:
     hibernate:
       ddl-auto: none

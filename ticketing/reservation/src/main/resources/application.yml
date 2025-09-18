@@ -17,11 +17,23 @@ spring:
     redis:
       host: redis
       port: 6379
+      lettuce:
+        pool:
+          max-active: 50   # 동시에 빌릴 수 있는 최대 커넥션 (기본값: 8)
+          max-idle: 20     # 풀에서 유지할 수 있는 최대 유휴 커넥션
+          min-idle: 5      # 최소 유휴 커넥션
+          time-between-eviction-runs: 60000 # 60초마다 idle 커넥션 정리
   datasource:
     url: jdbc:mysql://mysql:3306/ticketing
     username: ticket
     password: ticketpw
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 30      # 동시 커넥션 상한 (서버 CPU/메모리 고려해서 30~50 추천)
+      minimum-idle: 10           # 최소 유지 커넥션
+      idle-timeout: 30000        # 30초동안 안 쓰면 정리
+      max-lifetime: 1800000      # 30분 지나면 재생성
+      connection-timeout: 2000   # 풀에서 커넥션 못 빌리면 2초만 대기 후 예외
   jpa:
     hibernate:
       ddl-auto: none   # ✅ Hibernate가 테이블 생성/수정하지 않도록
