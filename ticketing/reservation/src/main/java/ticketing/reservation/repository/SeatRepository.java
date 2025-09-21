@@ -20,11 +20,23 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
       """, nativeQuery = true)
     int markSold(@Param("eventId") long eventId, @Param("seatId") long seatId);
 
-    // ✅ 해당 좌석이 SOLD인지 확인
+    // ✅ EXISTS 기반 최적화
     @Query(value = """
-      SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
-        FROM seats
-       WHERE id = :seatId AND event_id = :eventId AND status = 'SOLD'
+      SELECT EXISTS(
+        SELECT 1
+          FROM seats
+         WHERE id = :seatId
+           AND event_id = :eventId
+           AND status = 'SOLD'
+      )
       """, nativeQuery = true)
     int isSold(@Param("eventId") long eventId, @Param("seatId") long seatId);
+
+    // ✅ SOLD 좌석 전체 조회 (eventId, seatId 쌍)
+    @Query(value = """
+            SELECT event_id, id
+                FROM seats
+                WHERE status = 'SOLD'
+            """, nativeQuery = true)
+    List<Long[]> findSoldSeats();
 }
