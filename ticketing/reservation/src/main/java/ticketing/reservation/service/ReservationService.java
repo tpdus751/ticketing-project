@@ -62,6 +62,7 @@ public class ReservationService {
     // ✅ 서버 기동 시 SOLD 좌석 Preload
     @PostConstruct
     public void preloadSoldSeats() {
+        redis.delete(redis.keys("seat:sold:*"));
         List<Object[]> soldSeats = seatRepository.findSoldSeats();
         for (Object[] row : soldSeats) {
             Long eventId = ((Number) row[0]).longValue();
