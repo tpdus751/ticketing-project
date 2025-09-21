@@ -32,11 +32,15 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
       """, nativeQuery = true)
     int isSold(@Param("eventId") long eventId, @Param("seatId") long seatId);
 
-    // ✅ SOLD 좌석 전체 조회 (eventId, seatId 쌍)
+    public interface SoldSeatProjection {
+        Long getEventId();
+        Long getId();
+    }
+
     @Query(value = """
-            SELECT event_id, id
-                FROM seats
-                WHERE status = 'SOLD'
-            """, nativeQuery = true)
-    List<Long[]> findSoldSeats();
+    SELECT event_id, id
+      FROM seats
+     WHERE status = 'SOLD'
+""", nativeQuery = true)
+    List<Object[]> findSoldSeats();
 }

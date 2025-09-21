@@ -62,10 +62,10 @@ public class ReservationService {
     // ✅ 서버 기동 시 SOLD 좌석 Preload
     @PostConstruct
     public void preloadSoldSeats() {
-        List<Long[]> soldSeats = seatRepository.findSoldSeats();
-        for (Long[] seat : soldSeats) {
-            Long eventId = seat[0];
-            Long seatId = seat[1];
+        List<Object[]> soldSeats = seatRepository.findSoldSeats();
+        for (Object[] row : soldSeats) {
+            Long eventId = ((Number) row[0]).longValue();
+            Long seatId = ((Number) row[1]).longValue();
             redis.opsForValue().set(soldKey(eventId, seatId), "true");
         }
         log.info("[PRELOAD] {} SOLD seats preloaded into Redis", soldSeats.size());

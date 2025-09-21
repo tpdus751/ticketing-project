@@ -20,8 +20,8 @@ export const options = {
   },
 };
 
-const BASE_URL = "http://13.124.104.204/ticketing/reservation";
-const ORDER_URL = "http://13.124.104.204/ticketing/order";
+const BASE_URL = "http://13.209.77.187/ticketing/reservation";
+const ORDER_URL = "http://13.209.77.187/ticketing/order";
 const eventId = 3;
 
 // 100석 샘플
