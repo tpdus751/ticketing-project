@@ -17,12 +17,13 @@ spring:
     redis:
       host: redis
       port: 6379
+      timeout: 500ms    # Redis 응답 타임아웃
       lettuce:
         pool:
-          max-active: 50   # 동시에 빌릴 수 있는 최대 커넥션 (기본값: 8)
-          max-idle: 20     # 풀에서 유지할 수 있는 최대 유휴 커넥션
-          min-idle: 5      # 최소 유휴 커넥션
-          time-between-eviction-runs: 60000 # 60초마다 idle 커넥션 정리
+          max-active: 200   # 동시 커넥션 수 확장
+          max-idle: 50
+          min-idle: 10
+          max-wait: 200ms   # 커넥션 대기시간 제한 (기본은 무제한 → 병목)
   datasource:
     url: jdbc:mysql://mysql:3306/ticketing
     username: ticket
