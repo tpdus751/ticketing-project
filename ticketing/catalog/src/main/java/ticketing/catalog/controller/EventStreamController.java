@@ -50,6 +50,12 @@ public class EventStreamController {
             emittersByEvent.getOrDefault(eventId, new CopyOnWriteArrayList<>()).remove(emitter);
             log.warn("[SSE-TIMEOUT] eventId={} emitter removed", eventId);
         });
+
+        emitter.onError((e) -> {
+            emittersByEvent.getOrDefault(eventId, new CopyOnWriteArrayList<>()).remove(emitter);
+            log.warn("[SSE-ERROR] eventId={} emitter error={}, removed", eventId, e.getMessage());
+        });
+
         try {
             emitter.send(
                     SseEmitter.event()
@@ -110,19 +116,21 @@ public class EventStreamController {
 
     private void safeSend(SseEmitter emitter, ServerEvent ev, String traceId) {
         // 새로운 작업을 스레드 풀에 제출 (즉시 리턴 -> 호출부는 블로킹 안됨)
-        try {
-            emitter.send(
-                    SseEmitter.event()
-                            .id(String.valueOf(ev.id))
-                            .name(ev.event)
-                            .data(ev.data)
-            );
-        } catch (IOException e) {
-            log.warn("[SSE-SEND-ERROR] emitter already closed, removing. error={} traceId={}", e.getMessage(), traceId);
-            // 전송 실패
-            emitter.completeWithError(e); // <- complete() 대신 completeWithError 로 마무리
-            emittersByEvent.values().forEach(list -> list.remove(emitter));
-        }
+        sseExecutor.submit(() -> {
+            try {
+                emitter.send(
+                        SseEmitter.event()
+                                .id(String.valueOf(ev.id))
+                                .name(ev.event)
+                                .data(ev.data)
+                );
+            } catch (IOException e) {
+                log.warn("[SSE-SEND-ERROR] emitter already closed, removing. error={} traceId={}", e.getMessage(), traceId);
+                // 전송 실패
+                emitter.completeWithError(e); // <- complete() 대신 completeWithError 로 마무리
+                // emittersByEvent.values().forEach(list -> list.remove(emitter));
+            }
+        });
     }
 
     record SeatUpdate(Long seatId, String status, int version) {}
