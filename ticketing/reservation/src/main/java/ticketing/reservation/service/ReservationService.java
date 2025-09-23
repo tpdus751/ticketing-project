@@ -149,19 +149,12 @@ public class ReservationService {
     @Observed(name = "reservation.hold")
     public HoldResult holdSeat(long eventId, long seatId, int holdSeconds, String traceId) {
         return metrics.recordHold(() -> {
+            // ✅ Redis 단일 소스 기반 SOLD 체크
             boolean sold = Observation
                     .createNotStarted("redis.isSold", obs)
                     .lowCardinalityKeyValue(KeyValue.of("event.id", String.valueOf(eventId)))
                     .lowCardinalityKeyValue(KeyValue.of("seat.id", String.valueOf(seatId)))
-                    .observe(() -> {
-                        boolean cached = Boolean.TRUE.equals(redis.hasKey(soldKey(eventId, seatId)));
-                        if (cached) return true;
-                        boolean dbSold = seatRepository.isSold(eventId, seatId) > 0;
-                        if (dbSold) {
-                            redis.opsForValue().set(soldKey(eventId, seatId), "true");
-                        }
-                        return dbSold;
-                    });
+                    .observe(() -> Boolean.TRUE.equals(redis.hasKey(soldKey(eventId, seatId))));
 
             if (sold) {
                 metrics.incHoldConflict();
@@ -170,6 +163,7 @@ public class ReservationService {
                 throw new ApiException(Errors.VALIDATION_FAILED, "Seat already sold");
             }
 
+            // ✅ Hold 정보 JSON 직렬화
             String value;
             try {
                 value = om.writeValueAsString(Map.of(
@@ -185,6 +179,7 @@ public class ReservationService {
                 throw new RuntimeException(e);
             }
 
+            // ✅ Redis LuaScript 기반 setnx
             Long ret = Observation
                     .createNotStarted("redis.hold.setnx", obs)
                     .lowCardinalityKeyValue(KeyValue.of("event.id", String.valueOf(eventId)))
@@ -202,15 +197,19 @@ public class ReservationService {
                         eventId, seatId, traceId);
                 return new HoldResult(false, null);
             }
+
+            // ✅ Hold 성공 처리
             metrics.incHoldSuccess();
             catalogNotifier.notifySeatChange(eventId, seatId, "HELD", 1, traceId);
 
             Instant expiresAt = Instant.now().plusSeconds(holdSeconds);
             log.info("[RESERVATION-HOLD] eventId={} seatId={} holdSeconds={} expiresAt={} traceId={}",
                     eventId, seatId, holdSeconds, expiresAt, traceId);
+
             return new HoldResult(true, expiresAt);
         });
     }
+
 
     public boolean isHeld(long eventId, long seatId) {
         return Boolean.TRUE.equals(redis.hasKey(holdKey(eventId, seatId)));
