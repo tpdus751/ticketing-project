@@ -46,34 +46,35 @@
 ---
 
 ## 🏗️ 아키텍처
+## 🏗️ 아키텍처
 ```mermaid
-flowchart TB
+flowchart LR
     subgraph Client["🖥️ Client (브라우저, React/Vite)"]
         FE["Frontend (React 18 + Vite + pnpm)\nTanStack Query, Zustand, SSE"]
     end
 
-    subgraph EC2["☁️ AWS EC2 (Docker Compose, Nginx Reverse Proxy)"]
+    subgraph EC2["☁️ AWS EC2 (Docker Compose + Nginx)"]
         Nginx["Nginx\nReverse Proxy (/ticketing/*)"]
 
         subgraph BE["Spring Boot Microservices"]
-            C["Catalog Service :8080"]
-            R["Reservation Service :8081"]
-            O["Order Service :8082"]
-            P["Payment Service :8083"]
+            C["Catalog Service :8080\n(이벤트/좌석 조회 + SSE)"]
+            R["Reservation Service :8081\n(좌석 Hold/Confirm, Redis TTL)"]
+            O["Order Service :8082\n(주문, Outbox + Idempotency)"]
+            P["Payment Service :8083\n(모의 결제, Saga 보상)"]
         end
 
         subgraph Infra["Infra & Monitoring"]
             MySQL["MySQL 8 (ticketing-db)"]
-            Redis["Redis 7 (TTL + Lua seat hold)"]
-            Kafka["Kafka 7.6 (broker + Zookeeper)"]
-            Jaeger["Jaeger UI :16686 (Tracing)"]
+            Redis["Redis 7 (좌석 상태 관리)"]
+            Kafka["Kafka 7.6 + Zookeeper"]
+            Jaeger["Jaeger :16686 (Tracing)"]
             Prometheus["Prometheus :9090"]
             Grafana["Grafana :3000"]
         end
     end
 
     FE -->|HTTP/SSE| Nginx
-    Nginx -->|REST/SSE Proxy| C
+    Nginx --> C
     Nginx --> R
     Nginx --> O
     Nginx --> P
@@ -82,13 +83,14 @@ flowchart TB
     R --> MySQL
     C --> MySQL
     O --> MySQL
-    P --> Kafka
+
     O --> Kafka
+    P --> Kafka
     R --> Kafka
 
+    Kafka --> O
     Kafka --> R
     Kafka --> P
-    Kafka --> O
 
     BE --> Jaeger
     BE --> Prometheus --> Grafana
