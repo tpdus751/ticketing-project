@@ -49,42 +49,18 @@
 ## 🏗️ 아키텍처
 ```mermaid
 flowchart LR
-    subgraph Client["🖥️ Client (브라우저, React/Vite)"]
-        FE["Frontend (React 18 + Vite + pnpm)\nTanStack Query, Zustand, SSE"]
-    end
+    FE[Frontend] -->|HTTP/SSE| Nginx
+    Nginx --> C[Catalog]
+    Nginx --> R[Reservation]
+    Nginx --> O[Order]
+    Nginx --> P[Payment]
 
-    subgraph EC2["☁️ AWS EC2 (Docker Compose + Nginx)"]
-        Nginx["Nginx\nReverse Proxy (/ticketing/*)"]
-
-        subgraph BE["Spring Boot Microservices"]
-            C["Catalog Service :8080\n(이벤트/좌석 조회 + SSE)"]
-            R["Reservation Service :8081\n(좌석 Hold/Confirm, Redis TTL)"]
-            O["Order Service :8082\n(주문, Outbox + Idempotency)"]
-            P["Payment Service :8083\n(모의 결제, Saga 보상)"]
-        end
-
-        subgraph Infra["Infra & Monitoring"]
-            MySQL["MySQL 8 (ticketing-db)"]
-            Redis["Redis 7 (좌석 상태 관리)"]
-            Kafka["Kafka 7.6 + Zookeeper"]
-            Jaeger["Jaeger :16686 (Tracing)"]
-            Prometheus["Prometheus :9090"]
-            Grafana["Grafana :3000"]
-        end
-    end
-
-    FE -->|HTTP/SSE| Nginx
-    Nginx --> C
-    Nginx --> R
-    Nginx --> O
-    Nginx --> P
-
-    R --> Redis
-    R --> MySQL
+    R --> Redis[(Redis)]
+    R --> MySQL[(MySQL)]
     C --> MySQL
     O --> MySQL
 
-    O --> Kafka
+    O --> Kafka[(Kafka)]
     P --> Kafka
     R --> Kafka
 
@@ -92,8 +68,16 @@ flowchart LR
     Kafka --> R
     Kafka --> P
 
-    BE --> Jaeger
-    BE --> Prometheus --> Grafana
+    BE[Microservices] --> Jaeger[(Jaeger)]
+    BE --> Prometheus[(Prometheus)] --> Grafana[(Grafana)]
+
+    %% 색상 지정 (linkStyle index stroke:color,stroke-width,fill:none)
+    linkStyle 0 stroke:#2ecc71,stroke-width:2px  %% FE → Nginx (green)
+    linkStyle 1 stroke:#3498db,stroke-width:2px  %% Nginx → Catalog (blue)
+    linkStyle 2 stroke:#f1c40f,stroke-width:2px  %% Nginx → Reservation (yellow)
+    linkStyle 3 stroke:#e67e22,stroke-width:2px  %% Nginx → Order (orange)
+    linkStyle 4 stroke:#9b59b6,stroke-width:2px  %% Nginx → Payment (purple)
+
 ```
 🛠️ 기술 스택
 Backend: Java 21, Spring Boot 3.3, JPA, Redis 7, Kafka 7.6, MySQL 8
