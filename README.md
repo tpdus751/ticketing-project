@@ -56,19 +56,19 @@ flowchart TB
         Nginx["Nginx\nReverse Proxy (/ticketing/*)"]
 
         subgraph BE["Spring Boot Microservices"]
-            C[Catalog Service\n:8080]
-            R[Reservation Service\n:8081]
-            O[Order Service\n:8082]
-            P[Payment Service\n:8083]
+            C["Catalog Service :8080"]
+            R["Reservation Service :8081"]
+            O["Order Service :8082"]
+            P["Payment Service :8083"]
         end
 
         subgraph Infra["Infra & Monitoring"]
-            MySQL[MySQL 8\n(ticketing-db)]
-            Redis[Redis 7\nTTL + Lua seat hold]
-            Kafka[Kafka 7.6\nbroker + Zookeeper]
-            Jaeger[Jaeger UI :16686\n(OpenTelemetry)]
-            Prometheus[Prometheus :9090]
-            Grafana[Grafana :3000]
+            MySQL["MySQL 8 (ticketing-db)"]
+            Redis["Redis 7 (TTL + Lua seat hold)"]
+            Kafka["Kafka 7.6 (broker + Zookeeper)"]
+            Jaeger["Jaeger UI :16686 (Tracing)"]
+            Prometheus["Prometheus :9090"]
+            Grafana["Grafana :3000"]
         end
     end
 
