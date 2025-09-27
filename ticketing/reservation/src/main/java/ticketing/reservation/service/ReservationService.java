@@ -149,6 +149,20 @@ public class ReservationService {
     @Observed(name = "reservation.hold")
     public HoldResult holdSeat(long eventId, long seatId, int holdSeconds, String traceId) {
         return metrics.recordHold(() -> {
+            // ✅ Redis 단일 소스 기반 SOLD 체크
+            boolean sold = Observation
+                    .createNotStarted("redis.isSold", obs)
+                    .lowCardinalityKeyValue(KeyValue.of("event.id", String.valueOf(eventId)))
+                    .lowCardinalityKeyValue(KeyValue.of("seat.id", String.valueOf(seatId)))
+                    .observe(() -> Boolean.TRUE.equals(redis.hasKey(soldKey(eventId, seatId))));
+
+            if (sold) {
+                metrics.incHoldConflict();
+                log.warn("[RESERVATION-HOLD-CONFLICT] eventId={} seatId={} traceId={} reason=already_sold",
+                        eventId, seatId, traceId);
+                throw new ApiException(Errors.VALIDATION_FAILED, "Seat already sold");
+            }
+
             // ✅ Hold 정보 JSON 직렬화
             String value;
             try {
@@ -165,41 +179,23 @@ public class ReservationService {
                 throw new RuntimeException(e);
             }
 
-            // ✅ Redis LuaScript (is-sold + setnx 통합)
-            String HOLD_LUA = """
-            -- KEYS[1]=soldKey, KEYS[2]=holdKey
-            -- ARGV[1]=ttl, ARGV[2]=value
-            if redis.call('EXISTS', KEYS[1]) == 1 then
-              return -1   -- 이미 SOLD
-            end
-            if redis.call('EXISTS', KEYS[2]) == 1 then
-              return 0    -- 이미 HELD
-            end
-            redis.call('SET', KEYS[2], ARGV[2], 'EX', ARGV[1])
-            return 1       -- 성공
-        """;
-
+            // ✅ Redis LuaScript 기반 setnx
             Long ret = Observation
-                    .createNotStarted("reservation.redis.hold", obs)
+                    .createNotStarted("redis.hold.setnx", obs)
                     .lowCardinalityKeyValue(KeyValue.of("event.id", String.valueOf(eventId)))
                     .lowCardinalityKeyValue(KeyValue.of("seat.id", String.valueOf(seatId)))
                     .observe(() -> redis.execute(
-                            new DefaultRedisScript<>(HOLD_LUA, Long.class),
-                            List.of(soldKey(eventId, seatId), holdKey(eventId, seatId)),
-                            String.valueOf(holdSeconds), value
+                            new DefaultRedisScript<>(LUA, Long.class),
+                            List.of(holdKey(eventId, seatId)),
+                            String.valueOf(holdSeconds),
+                            value
                     ));
 
-            // ✅ 결과 처리
             if (ret == null || ret == 0L) {
                 metrics.incHoldConflict();
                 log.warn("[RESERVATION-HOLD-CONFLICT] eventId={} seatId={} traceId={} reason=already_held",
                         eventId, seatId, traceId);
                 return new HoldResult(false, null);
-            } else if (ret == -1L) {
-                metrics.incHoldConflict();
-                log.warn("[RESERVATION-HOLD-CONFLICT] eventId={} seatId={} traceId={} reason=already_sold",
-                        eventId, seatId, traceId);
-                throw new ApiException(Errors.VALIDATION_FAILED, "Seat already sold");
             }
 
             // ✅ Hold 성공 처리
@@ -223,15 +219,7 @@ public class ReservationService {
     @Transactional
     public void markSeatSold(long eventId, long seatId, String traceId) {
         metrics.recordConfirm(() -> {
-            // ✅ Redis LuaScript (holdKey 삭제 + soldKey 세팅 통합)
-            String CONFIRM_LUA = """
-            -- KEYS[1]=holdKey, KEYS[2]=soldKey
-            redis.call('DEL', KEYS[1])
-            redis.call('SET', KEYS[2], 'true')
-            return 1
-        """;
-
-            // ✅ DB 업데이트 (status = SOLD)
+            redis.delete(holdKey(eventId, seatId));
             int rows = seatRepository.markSold(eventId, seatId);
             if (rows == 0) {
                 log.error("[RESERVATION-CONFIRM-FAILED] eventId={} seatId={} traceId={} reason=invalid_ids",
@@ -239,17 +227,7 @@ public class ReservationService {
                 throw new ApiException(Errors.VALIDATION_FAILED, "Invalid eventId/seatId");
             }
 
-            // ✅ Redis 원자적 갱신 실행
-            Observation
-                    .createNotStarted("reservation.redis.confirm", obs)
-                    .lowCardinalityKeyValue(KeyValue.of("event.id", String.valueOf(eventId)))
-                    .lowCardinalityKeyValue(KeyValue.of("seat.id", String.valueOf(seatId)))
-                    .observe(() -> redis.execute(
-                            new DefaultRedisScript<>(CONFIRM_LUA, Long.class),
-                            List.of(holdKey(eventId, seatId), soldKey(eventId, seatId))
-                    ));
-
-            // ✅ Metrics + SSE 반영
+            redis.opsForValue().set(soldKey(eventId, seatId), "true");
             metrics.incConfirmSuccess();
             catalogNotifier.notifySeatChange(eventId, seatId, "SOLD", 1, traceId);
 
