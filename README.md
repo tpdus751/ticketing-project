@@ -272,10 +272,99 @@ location /healthz {
 ```
 ## CI/CD (GitHub Actions)
 
-- **CI**: PR마다 **빌드 → 테스트 → 이미지 빌드**까지 수행.  
-- **CD**: main 머지 시 이미지 푸시(GHCR) 후,  
-  EC2에서 `docker compose pull && docker compose up -d`로 롤링.  
-- **실패 대비**: 롤백은 이전 태그로 `docker compose up -d` 재기동.
+### 🔹 파이프라인 개요
+- **CI**  
+  - main 브랜치로 PR 생성 시 **빌드 → 테스트 → 이미지 빌드**까지 자동 수행  
+- **CD**  
+  - main 브랜치에 머지(push)되면  
+    1. Jib으로 모듈별(Dockerfile 불필요) **이미지 빌드 후 GHCR 푸시**  
+    2. EC2 접속 → 최신 이미지 pull → `docker compose up -d` 재기동 (롤링 배포)  
+
+- **실패 대비**  
+  - 배포 실패 시, 이전 태그 이미지로 `docker compose up -d` 실행해 롤백 가능  
+
+---
+
+### 🔹 GitHub Actions 워크플로우 예시 (`.github/workflows/deploy.yml`)
+
+```yaml
+name: Deploy Ticketing Project (BE only)
+
+on:
+  push:
+    branches: [ "main" ]   # main 브랜치 push 시 자동 배포
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 코드 체크아웃
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. JDK 17 세팅
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # 3. Reservation 모듈 빌드 & 푸시
+      - name: Build & Push Reservation Image
+        run: |
+          cd ticketing
+          ./gradlew :reservation:jib \
+            -Djib.to.image=ghcr.io/tpdus751/reservation:latest \
+            -Djib.to.auth.username=tpdus751 \
+            -Djib.to.auth.password=${{ secrets.GHCR_TOKEN }} \
+            --no-configuration-cache
+
+      # 4. Order 모듈 빌드 & 푸시
+      - name: Build & Push Order Image
+        run: |
+          cd ticketing
+          ./gradlew :order:jib \
+            -Djib.to.image=ghcr.io/tpdus751/order:latest \
+            -Djib.to.auth.username=tpdus751 \
+            -Djib.to.auth.password=${{ secrets.GHCR_TOKEN }} \
+            --no-configuration-cache
+
+      # 5. Payment 모듈 빌드 & 푸시
+      - name: Build & Push Payment Image
+        run: |
+          cd ticketing
+          ./gradlew :payment:jib \
+            -Djib.to.image=ghcr.io/tpdus751/payment:latest \
+            -Djib.to.auth.username=tpdus751 \
+            -Djib.to.auth.password=${{ secrets.GHCR_TOKEN }} \
+            --no-configuration-cache
+
+      # 6. Catalog 모듈 빌드 & 푸시
+      - name: Build & Push Catalog Image
+        run: |
+          cd ticketing
+          ./gradlew :catalog:jib \
+            -Djib.to.image=ghcr.io/tpdus751/catalog:latest \
+            -Djib.to.auth.username=tpdus751 \
+            -Djib.to.auth.password=${{ secrets.GHCR_TOKEN }} \
+            --no-configuration-cache
+
+      # 7. EC2 접속 & 배포
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}      # EC2 퍼블릭 IP
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}    # pem 파일 내용
+          script: |
+            cd /srv/ticketing/ticketing-project
+            git fetch origin
+            git checkout main
+            git pull origin main
+            cd ticketing/infra
+            sudo docker compose -f docker-compose.prod.yml pull
+            sudo docker compose -f docker-compose.prod.yml up -d
+```
 
 ---
 
