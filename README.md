@@ -413,29 +413,3 @@ cd frontend && pnpm install && pnpm dev
   “계약”이 흔들리면 프론트/백 동시 개발이 어렵다.  
 
 ---
-
-## 한계 & 이후 계획
-
-- **Jaeger**: “주문 1건 전체 Trace” 완전 연결 미완 →  
-  전 서비스 OTel agent 표준화, B3/W3C 전파 점검 필요.  
-
-- **Resilience**: 서킷브레이커/재시도/타임아웃은 기본값 수준 →  
-  장애 주입(k6/chaos)로 톤업 예정.  
-
-- **보안**: 간단 JWT/토큰 검증만 →  
-  권한/스코프·비밀 관리(SSM/Secrets Manager) 적용 필요.  
-
-- **운영**: 단일 EC2 →  
-  멀티 AZ, 헬스체크/오토 리커버리까지 확장 검토.  
-
----
-
-## SLO & DoD
-
-- **SLO**: Oversell 0, p95 < 300ms, Error < 0.5%  
-- **DoD**: 좌석 클릭 → 홀드 → 결제 → 확정 플로우가 데모 환경에서 일관 재현.  
-  오류 응답은 표준 바디와 Trace-Id 제공, CI 성공.  
-
----
-
-📌 **프로젝트 링크:** [tpdus751/ticketing-project](https://github.com/tpdus751/ticketing-project)
