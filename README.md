@@ -210,7 +210,6 @@ https://github.com/user-attachments/assets/17d0211e-2712-4a98-8759-69cf3e6f6b64
 - <img width="1918" height="554" alt="image" src="https://github.com/user-attachments/assets/c26c57bf-3a33-4de7-b585-b780b2c86f2d" />
 - <img width="1916" height="557" alt="image" src="https://github.com/user-attachments/assets/40135de6-d74d-402a-9cc1-3ad5aba482b2" />
 - **Jaeger(분산추적)**: OpenTelemetry 연동, DB 경합을 제거하고 Redis-only 흐름으로 단순화했을 때 성능이 개선됨을 확인.(이미지는 가장 오래걸린 요청/응답)
-- **p95**: 시나리오/환경에 따라 변동 (목표 300ms 이하).
 - <img width="1545" height="1032" alt="image" src="https://github.com/user-attachments/assets/762632d5-a032-4c1c-8fb2-106e3e8a05a1" />
 - **Prometheus/Grafana**: 기본 JVM/HTTP 메트릭 수집 및 대시보드 구성.
 
