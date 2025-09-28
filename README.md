@@ -401,14 +401,12 @@ cd frontend && pnpm install && pnpm dev
 
 이번 프로젝트는 Day01 ~ Day05를 포함해 총 15일치 작업 로그를 남기며, 초고동시성 티켓 예매 시스템의 FE/BE를 동시에 발전시킨 과정이었다. 각 단계에서의 핵심 교훈을 정리하면 다음과 같다.
 
----
 
 ### 1. 프로젝트 초기 세팅 (W1 D01~D02)
 - **BE**: Spring Boot + MySQL + Redis + Jaeger 환경을 docker-compose로 올리고, Flyway 마이그레이션으로 DB 스키마와 시드 데이터를 고정.  
 - **FE**: Vite+React+TS 기반 UI 뼈대와 라우팅 구축, React Query로 API 연동.  
 - **교훈**: FE/BE 계약이 조금만 어긋나도(`date` vs `dateTime`) 즉시 장애로 이어짐. **계약 동기화와 초기 라우팅 고정**이 얼마나 중요한지 체감했다.
 
----
 
 ### 2. 좌석 예약/정합성 확보 (W1 D03~D04)
 - **Redis + Lua**로 좌석 선점(hold) 구현 → oversell 방지.  
@@ -419,7 +417,6 @@ cd frontend && pnpm install && pnpm dev
   - 409/410/422 같은 에러 코드도 도메인 로직에선 정상 시나리오가 될 수 있다.  
   - FE-Backend 동기화 없이는 데이터 정합성이 깨진다.
 
----
 
 ### 3. 관측성과 성능 가시화 (W1 D05)
 - **Micrometer Observation**으로 DB/Redis 호출까지 자식 span으로 기록.  
@@ -427,7 +424,6 @@ cd frontend && pnpm install && pnpm dev
 - **Grafana 대시보드**에 Hold/Confirm 성공률, p95 레이턴시, 에러율 패널 추가.  
 - **교훈**: 추상적 메트릭(Grafana)과 구체적 실행 흐름(Jaeger)을 함께 보면 시스템을 **하나의 생명체처럼** 이해할 수 있다.
 
----
 
 ### 4. MSA 전환 & FE 데이터 캐싱 (W2 D06)
 - Monolith → **Catalog/Reservation 모듈 분리**, API_BASE 이원화.  
@@ -435,7 +431,6 @@ cd frontend && pnpm install && pnpm dev
 - Redis TTL 기반 동시성 제어를 MSA 구조로도 유지.  
 - **교훈**: MSA 전환은 기능 추가보다 **동등 기능 유지**가 관건. 작은 CORS/BASE 설정 차이도 대장애가 된다.
 
----
 
 ### 5. 주문/결제 플로우 & SSE 안정화 (W2 D07~D08)
 - **Outbox 패턴**으로 Kafka 발행 보장, 실패 시 재처리 가능.  
@@ -448,20 +443,17 @@ cd frontend && pnpm install && pnpm dev
   - 작은 버그(Emitter completed)가 실시간성 신뢰도 전체를 무너뜨린다.  
   - Polling도 가능하지만, 실시간 업데이트는 결국 SSE/WS가 정석이다.
 
----
 
 ### 6. 트레이스 전파와 한계 (W2 D08 중간점검)
 - Kafka Headers 기반 traceparent 추출/전파 시도, Micrometer/OTel 연계 실험.  
 - Scheduler 기반 Worker는 trace context가 끊겨 backlog 발생.  
 - **교훈**: 완벽한 end-to-end trace는 쉽지 않다. **TraceId 로그 기반 모니터링**이 현실적 대안일 수 있다.
 
----
 
 ### 7. API 계약 고정 (API.md, Day01 9/13)
 - **오류 표준화**, **Idempotency-Key 헤더**, **Trace-Id 응답 헤더**를 계약 수준에서 문서화.  
 - **교훈**: 계약이 흔들리면 FE/BE 동시 개발이 불가능하다. **계약 우선 원칙**이 프로젝트 성공의 전제였다.
 
----
 
 ### 8. EC2 배포 및 CI/CD (Day02~Day03)
 - **EC2 t3.medium**에 Docker Compose 배포.  
@@ -472,7 +464,6 @@ cd frontend && pnpm install && pnpm dev
   - SSE 프록시는 단순 버퍼링 해제만으로는 부족, Nginx에 세부 옵션이 필요하다.  
   - CI/CD는 단순 자동화가 아니라 **Fail-safe(알림/롤백)**까지 포함해야 실용적이다.
 
----
 
 ### 9. 부하 테스트 & 병목 분석 (Day04~Day05)
 - **k6 50~1000 VU 테스트** → DB is-sold 쿼리 직렬화가 병목.  
@@ -485,7 +476,6 @@ cd frontend && pnpm install && pnpm dev
   - 응답성 개선은 단순 속도 문제가 아니라 **UX 신뢰성** 문제다.  
   - 부하테스트는 항상 **가장 오래 걸린 구간**을 기준으로 병목을 잡아야 한다.
 
----
 
 ## 최종 총괄
 - **동시성 제어**: DB 트랜잭션만으로는 부족, Redis TTL/Lua가 유일한 답.  
