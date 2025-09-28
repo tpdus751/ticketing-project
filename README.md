@@ -244,7 +244,7 @@ location /ticketing/catalog/ {
   proxy_send_timeout 3600s;
 }
 
-// 📌 **왜 이렇게 설정했나?**  
+// 📌 catalog : 왜 이렇게 설정했나?  
 // - Catalog 모듈은 `GET /events/{id}/seats/stream` 으로 **좌석 상태 SSE 스트림**을 제공함  
 // - SSE 특성상 **연결을 장시간 유지**하고, 데이터가 오면 **바로바로 전달**되어야 함  
 // - 기본 Nginx 설정은 버퍼링/캐싱 때문에 메시지가 지연되거나 잘려 나갈 수 있음  
