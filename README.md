@@ -397,6 +397,9 @@ cd frontend && pnpm install && pnpm dev
   ├─ infra/           # docker-compose, k6, grafana, prometheus.yml
   └─ docs/            # 일지(Daily Logs), 아키텍처, API.md
 ```
+
+---
+
 ## 고찰 & 배운 점
 
 이번 프로젝트는 Day01 ~ Day05를 포함해 총 15일치 작업 로그를 남기며, 초고동시성 티켓 예매 시스템의 FE/BE를 동시에 발전시킨 과정이었다. 각 단계에서의 핵심 교훈을 정리하면 다음과 같다.
@@ -476,6 +479,7 @@ cd frontend && pnpm install && pnpm dev
   - 응답성 개선은 단순 속도 문제가 아니라 **UX 신뢰성** 문제다.  
   - 부하테스트는 항상 **가장 오래 걸린 구간**을 기준으로 병목을 잡아야 한다.
 
+---
 
 ## 최종 총괄
 - **동시성 제어**: DB 트랜잭션만으로는 부족, Redis TTL/Lua가 유일한 답.  
