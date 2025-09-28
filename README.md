@@ -261,14 +261,13 @@ location /healthz {
   return 200 'ok';
   add_header Content-Type text/plain;
 }
-[여기까지 코드블록 끝]
+```
 ## CI/CD (GitHub Actions)
 
 - **CI**: PR마다 **빌드 → 테스트 → 이미지 빌드**까지 수행.  
 - **CD**: main 머지 시 이미지 푸시(GHCR) 후,  
   EC2에서 `docker compose pull && docker compose up -d`로 롤링.  
 - **실패 대비**: 롤백은 이전 태그로 `docker compose up -d` 재기동.
-```
 
 ---
 
