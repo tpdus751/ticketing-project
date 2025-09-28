@@ -112,13 +112,14 @@ flowchart LR
     Prometheus --> Grafana
 
     %% ======================
-    %% Styling (main flows colored)
+    %% Styling (main flows)
     %% ======================
-    linkStyle 0 stroke:#2ecc71,stroke-width:2px,fill:none  %% FE → Nginx
-    linkStyle 1 stroke:#3498db,stroke-width:2px,fill:none  %% Nginx → Catalog
-    linkStyle 2 stroke:#f1c40f,stroke-width:2px,fill:none  %% Nginx → Reservation
-    linkStyle 3 stroke:#e67e22,stroke-width:2px,fill:none  %% Nginx → Order
-    linkStyle 4 stroke:#9b59b6,stroke-width:2px,fill:none  %% Nginx → Payment
+    linkStyle 0 stroke:#2ecc71,stroke-width:2px,fill:none
+    linkStyle 1 stroke:#3498db,stroke-width:2px,fill:none
+    linkStyle 2 stroke:#f1c40f,stroke-width:2px,fill:none
+    linkStyle 3 stroke:#e67e22,stroke-width:2px,fill:none
+    linkStyle 4 stroke:#9b59b6,stroke-width:2px,fill:none
+
 ```
 Backend: Java 21, Spring Boot 3.3, JPA, Redis 7, Kafka 7.6, MySQL 8
 
