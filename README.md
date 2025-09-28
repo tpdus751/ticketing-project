@@ -52,77 +52,85 @@ config:
   layout: elk
 ---
 flowchart LR
-    %% ======================
-    %% Client (Local)
-    %% ======================
+    %% ---------- Local ----------
     subgraph Local["💻 Local Environment"]
-        FE["Frontend (React 18 + Vite + pnpm)\nTanStack Query, Zustand, SSE"]
+        FE["Frontend<br>(React 18 + Vite + pnpm)<br>TanStack Query, Zustand, SSE"]
     end
 
-    %% ======================
-    %% AWS EC2
-    %% ======================
+    %% ---------- AWS EC2 ----------
     subgraph EC2["☁️ AWS EC2 (Docker Compose + Nginx)"]
-        Nginx["Nginx\nReverse Proxy (/ticketing/*)"]
+        Nginx["Nginx<br>Reverse Proxy (/ticketing/*)"]
 
-        %% Microservices
+        %% Microservices (수평 배치)
         subgraph BE["Spring Boot Microservices"]
-            C["Catalog :8080\n(이벤트/좌석 조회 + SSE)"] 
-            R["Reservation :8081\n(좌석 Hold/Confirm, Redis TTL)"] 
-            O["Order :8082\n(주문, Outbox + Idempotency)"] 
-            P["Payment :8083\n(모의 결제, Saga 보상)"] 
+            C["Catalog :8080<br>(이벤트/좌석 조회 + SSE)"]
+            R["Reservation :8081<br>(좌석 Hold/Confirm, Redis TTL)"]
+            O["Order :8082<br>(주문, Outbox + Idempotency, Saga orchestrator)"]
+            P["Payment :8083<br>(모의 결제 시뮬레이션)"]
         end
 
-        %% Infra
+        %% Infra & Observability
         subgraph Infra["Infra & Monitoring"]
-            MySQL[("MySQL 8\n(ticketing-db)")]
-            Redis[("Redis 7\nTTL + Lua seat hold")]
-            Kafka[("Kafka 7.6\n+ Zookeeper")]
-            Jaeger[("Jaeger :16686\nTracing")]
-            Prometheus[("Prometheus :9090\nMetrics")]
-            Grafana["Grafana :3000\nDashboards"]
+            MySQL[("MySQL 8<br>(ticketing-db)")]
+            Redis[("Redis 7<br>TTL + Lua seat hold")]
+            Kafka[("Kafka 7.6<br>+ Zookeeper")]
+            Prometheus[("Prometheus :9090<br>Metrics")]
+            Jaeger[("Jaeger :16686<br>Tracing")]
+            Grafana["Grafana :3000<br>Dashboards"]
         end
     end
 
-    %% ======================
-    %% Connections
-    %% ======================
+    %% ---------- Connections ----------
     FE -- HTTP/SSE --> Nginx
     Nginx -- REST --> C
     Nginx --> R
     Nginx --> O
     Nginx --> P
 
+    %% Catalog
     C --> MySQL
+    C --> Prometheus
+    C --> Jaeger
+
+    %% Reservation
     R --> Redis
     R --> MySQL
+    R --> Kafka
+    R --> Prometheus
+    R --> Jaeger
+
+    %% Order
     O --> MySQL
     O --> Kafka
-    R --> Kafka
+    O --> Prometheus
+    O --> Jaeger
     Kafka --> O
     Kafka --> R
 
-    %% Observability
-    C --> Jaeger
-    R --> Jaeger
-    O --> Jaeger
-    P --> Jaeger
-
-    C --> Prometheus
-    R --> Prometheus
-    O --> Prometheus
+    %% Payment
     P --> Prometheus
+    P --> Jaeger
 
     Prometheus --> Grafana
 
-    %% ======================
-    %% Styling (main flows)
-    %% ======================
+    %% ---------- linkStyle ----------
+    %% 0: FE→Nginx (green)
+    %% 1: Nginx→Catalog (blue)
+    %% 2: Nginx→Reservation (yellow)
+    %% 3: Nginx→Order (orange)
+    %% 4: Nginx→Payment (purple)
+    %% Catalog flows = blue, Reservation flows = yellow, Order flows = orange, Payment flows = purple
+
     linkStyle 0 stroke:#2ecc71,stroke-width:2px,fill:none
     linkStyle 1 stroke:#3498db,stroke-width:2px,fill:none
     linkStyle 2 stroke:#f1c40f,stroke-width:2px,fill:none
     linkStyle 3 stroke:#e67e22,stroke-width:2px,fill:none
     linkStyle 4 stroke:#9b59b6,stroke-width:2px,fill:none
+
+    linkStyle 5,6,7 stroke:#3498db,stroke-width:2px,fill:none
+    linkStyle 8,9,10,11,12 stroke:#f1c40f,stroke-width:2px,fill:none
+    linkStyle 13,14,15,16,17 stroke:#e67e22,stroke-width:2px,fill:none
+    linkStyle 18,19 stroke:#9b59b6,stroke-width:2px,fill:none
 
 ```
 Backend: Java 21, Spring Boot 3.3, JPA, Redis 7, Kafka 7.6, MySQL 8
