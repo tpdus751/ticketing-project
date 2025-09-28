@@ -95,7 +95,7 @@
 
 - **내부 좌석 상태 업데이트**
   - `POST /internal/seat-update`  
-    Reservation/Order 모듈이 호출 → Catalog SSE 반영
+    Reservation 모듈이 호출 → Catalog SSE 반영
 
 ---
 
@@ -228,6 +228,7 @@ cd frontend && pnpm install && pnpm dev
   ├─ reservation/
   ├─ order/
   ├─ payment/
+  ├─ common/
   ├─ infra/           # docker-compose, k6, grafana, prometheus.yml
   └─ docs/            # 일지(Daily Logs), 아키텍처, API.md
 ```
