@@ -167,8 +167,6 @@
 백엔드 4개 서비스(`catalog`, `reservation`, `order`, `payment`)는 모두 동일한 규약을 따라야 하므로,  
 반복되는 코드를 **common 모듈**로 분리했습니다.
 
----
-
 ### 📌 구현 내용
 
 - **ApiException**
