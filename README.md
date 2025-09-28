@@ -13,7 +13,7 @@
 - [핵심 도메인 & 기능](#핵심-도메인--기능)
 - [API Contracts](#-api-contracts-v10--ec2--nginx-환경)
 - [백엔드 구현 세부(계약/동시성/사가/오류)](#백엔드-구현-세부계약동시성사가오류)
-- [공통 모듈 (common)](#공통-모듈--common)
+- [공통 모듈 (common)](#공통-모듈-(common))
 - [성능 & 관측(사실 위주)](#성능--관측사실-위주)
 - [배포(EC2/Compose/Nginx/레지스트리)](#배포ec2composenginx레지스트리)
 - [CI/CD(GitHub Actions)](#cicdgithub-actions)
