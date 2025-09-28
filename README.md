@@ -231,18 +231,25 @@ https://github.com/user-attachments/assets/17d0211e-2712-4a98-8759-69cf3e6f6b64
 ```Nginx
 location /ticketing/catalog/ {
   proxy_pass http://catalog/ticketing/;
-  proxy_http_version 1.1;
+  proxy_http_version 1.1;             # SSE는 HTTP/1.1 keep-alive 필요
   proxy_set_header Connection '';
-  proxy_set_header Cache-Control 'no-cache';
+  proxy_set_header Cache-Control 'no-cache';  # 캐싱 방지
 
-  proxy_buffering off;
-  proxy_cache off;
+  proxy_buffering off;                # Nginx 응답 버퍼링 해제 (SSE 실시간성 보장)
+  proxy_cache off;                    # 캐시 사용 금지
   chunked_transfer_encoding off;
-  add_header X-Accel-Buffering no;
+  add_header X-Accel-Buffering no;    # Nginx가 응답 버퍼링하지 않도록 명시
 
-  proxy_read_timeout 3600s;
+  proxy_read_timeout 3600s;           # 스트림 연결 장시간 유지
   proxy_send_timeout 3600s;
 }
+
+// 📌 **왜 이렇게 설정했나?**  
+// - Catalog 모듈은 `GET /events/{id}/seats/stream` 으로 **좌석 상태 SSE 스트림**을 제공함  
+// - SSE 특성상 **연결을 장시간 유지**하고, 데이터가 오면 **바로바로 전달**되어야 함  
+// - 기본 Nginx 설정은 버퍼링/캐싱 때문에 메시지가 지연되거나 잘려 나갈 수 있음  
+// - 따라서 `proxy_buffering off`, `X-Accel-Buffering no`, `no-cache` 등을 적용해  
+//  **좌석 선점/해제 이벤트가 FE에 실시간 도착**하도록 보장한 것
 
 location /ticketing/reservation/ {
   proxy_pass http://reservation/ticketing/;
