@@ -47,7 +47,11 @@
 
 ## 🏗️ 아키텍처
 ```mermaid
-flowchart TD
+---
+config:
+  layout: elk
+---
+flowchart LR
     %% ======================
     %% Client (Local)
     %% ======================
