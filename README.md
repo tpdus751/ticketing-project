@@ -47,7 +47,7 @@
 
 ## 🏗️ 아키텍처
 ```mermaid
-flowchart LR
+flowchart TD
     %% ======================
     %% Client (Local)
     %% ======================
