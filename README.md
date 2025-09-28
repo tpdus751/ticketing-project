@@ -54,6 +54,87 @@
   ```json
   { "code":"RESERVATION_CONFLICT", "message":"...", "traceId":"..." }
   ```
+
+## 📄 API Contracts (v1.0 – EC2 + Nginx 환경)
+
+### 🔹 공통 규약
+- **Base URL**
+  - Catalog: `http://3.39.21.47/ticketing/catalog/api/...`
+  - Reservation: `http://3.39.21.47/ticketing/reservation/api/...`
+  - Order: `http://3.39.21.47/ticketing/order/api/...`
+  - Payment: `http://3.39.21.47/ticketing/payment/api/...`
+
+- **오류 응답 바디 (표준)**
+```json
+{
+  "code": "RESERVATION_CONFLICT",
+  "message": "Seat already held",
+  "traceId": "f1a2b3c4-5678-90ab-cdef-1234567890ab"
+}
+```
+
+### 🔹 공통 헤더
+- **요청**: `Idempotency-Key` → `POST /ticketing/order/api/orders` 필수  
+- **응답**: `Trace-Id` → 모든 API 응답 헤더에 포함 (TraceIdFilter)
+
+---
+
+### 🔹 Catalog 모듈
+**Base URL:** `http://3.39.21.47/ticketing/catalog/api`
+
+- **이벤트**
+  - `GET /events` → 이벤트 목록 조회
+  - `GET /events/{id}` → 단일 이벤트 조회
+
+- **좌석**
+  - `GET /events/{id}/seats` → 좌석 맵 조회
+  - `GET /events/{id}/seats/stream` → 좌석 상태 스트리밍 (SSE)
+
+- **내부 좌석 상태 업데이트**
+  - `POST /internal/seat-update`  
+    Reservation/Order 모듈이 호출 → Catalog SSE 반영
+
+---
+
+### 🔹 Reservation 모듈
+**Base URL:** `http://3.39.21.47/ticketing/reservation/api`
+
+- `POST /reservations` → 좌석 홀드  
+- `POST /reservations/{eventId}/{seatId}/extend` → 홀드 연장  
+- `DELETE /reservations/{eventId}/{seatId}` → 좌석 해제  
+
+---
+
+### 🔹 Order 모듈
+**Base URL:** `http://3.39.21.47/ticketing/order/api`
+
+- `POST /orders`  
+  Header: `Idempotency-Key` 필수 → 주문 생성  
+
+- `GET /orders/{id}` → 주문 조회  
+
+---
+
+### 🔹 Payment 모듈
+**Base URL:** `http://3.39.21.47/ticketing/payment/api`
+
+- `POST /payments/authorize`  
+  모의 결제 (랜덤 지연 + 80:20 성공/실패)  
+
+---
+
+### 🔹 Health Check
+- 모든 모듈 공통:  
+  `GET /actuator/health`  
+  예시: `http://3.39.21.47/ticketing/catalog/actuator/health`
+
+응답 예시:
+```json
+{ "status": "UP" }
+```
+
+
+  
 ## 백엔드 구현 세부(계약/동시성/사가/오류)
 
 ### 1) 계약 우선(Contract-first)
