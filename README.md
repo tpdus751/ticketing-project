@@ -13,6 +13,7 @@
 - [핵심 도메인 & 기능](#핵심-도메인--기능)
 - [API Contracts](#-api-contracts-v10--ec2--nginx-환경)
 - [백엔드 구현 세부(계약/동시성/사가/오류)](#백엔드-구현-세부계약동시성사가오류)
+- [공통 모듈 (common)](#공통-모듈--common)
 - [성능 & 관측(사실 위주)](#성능--관측사실-위주)
 - [배포(EC2/Compose/Nginx/레지스트리)](#배포ec2composenginx레지스트리)
 - [CI/CD(GitHub Actions)](#cicdgithub-actions)
@@ -158,6 +159,46 @@
 ### 4) 표준 오류 & 재시도 UX
 - 409(CONFLICT)/410(GONE)/422(UNPROCESSABLE) 등 명확한 원인 전달.
 - 프론트는 남은 시간 카운트다운·토스트·재시도 가이드로 사용자 경험 유지.
+
+---
+
+## 공통 모듈 (common)
+
+백엔드 4개 서비스(`catalog`, `reservation`, `order`, `payment`)는 모두 동일한 규약을 따라야 하므로,  
+반복되는 코드를 **common 모듈**로 분리했습니다.
+
+---
+
+### 📌 구현 내용
+
+- **ApiException**
+  - 서비스 내에서 비즈니스 에러 발생 시  
+    `throw new ApiException(code, message)` 형태로 사용
+  - 모든 모듈에서 동일한 에러 코드 규약 유지
+
+- **ErrorResponse**
+  - 공통 오류 응답 바디를 `record`로 정의  
+
+```
+{ "code": "RESERVATION_CONFLICT", "message": "이미 예약된 좌석입니다", "traceId": "..." }  
+```
+
+---
+
+### 📌 Errors
+- 에러 코드 상수 정의
+- 예:
+  - `RESERVATION_CONFLICT` (중복 예약 충돌)  
+  - `RESERVATION_EXPIRED` (홀드 만료)  
+  - `VALIDATION_FAILED` (입력 검증 실패)
+
+---
+
+### 📌 TraceIdFilter
+- 모든 응답 헤더에 `Trace-Id` 포함  
+- **FE ↔ BE ↔ 로그** 전 구간 동일 ID 추적
+- OpenTelemetry `Span`에서 추출하여 헤더·로그·Request attribute에 삽입
+- 로그 MDC `%X{traceId}`로 출력되어 Kibana/Elastic, Grafana 등에서 연계 가능
 
 ---
 
