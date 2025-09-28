@@ -399,17 +399,102 @@ cd frontend && pnpm install && pnpm dev
 ```
 ## 고찰 & 배운 점
 
-- **동시성 제어**: DB 트랜잭션만으로는 좌석 경쟁을 커버하기 어렵다.  
-  Redis를 진실 소스로 두고 TTL/Lua로 원자적으로 제어해야 한다.  
+이번 프로젝트는 Day01 ~ Day05를 포함해 총 15일치 작업 로그를 남기며, 초고동시성 티켓 예매 시스템의 FE/BE를 동시에 발전시킨 과정이었다. 각 단계에서의 핵심 교훈을 정리하면 다음과 같다.
 
-- **사가 오케스트레이션**: Payment는 “응답만”, 보상은 Order가 책임진다는 역할 구분을 체득.  
+---
 
-- **관측성**: Jaeger는 “붙여보니 더 할 일이 보였다”.  
-  스팬 전파·샘플링·로그 상관관계 설계가 중요.  
+### 1. 프로젝트 초기 세팅 (W1 D01~D02)
+- **BE**: Spring Boot + MySQL + Redis + Jaeger 환경을 docker-compose로 올리고, Flyway 마이그레이션으로 DB 스키마와 시드 데이터를 고정.  
+- **FE**: Vite+React+TS 기반 UI 뼈대와 라우팅 구축, React Query로 API 연동.  
+- **교훈**: FE/BE 계약이 조금만 어긋나도(`date` vs `dateTime`) 즉시 장애로 이어짐. **계약 동기화와 초기 라우팅 고정**이 얼마나 중요한지 체감했다.
 
-- **배포 현실성**: Kubernetes까지는 못 갔지만, EC2+Compose만으로도 충분히 학습/데모 가능.  
+---
 
-- **계약 우선**: Idempotency-Key, 표준 오류, Trace-Id 등  
-  “계약”이 흔들리면 프론트/백 동시 개발이 어렵다.  
+### 2. 좌석 예약/정합성 확보 (W1 D03~D04)
+- **Redis + Lua**로 좌석 선점(hold) 구현 → oversell 방지.  
+- **표준 오류 바디 + Trace-Id 노출**로 FE/BE/로그 추적 일관성 확보.  
+- **Confirm API** 도입으로 Redis 상태를 DB SOLD로 반영, 사용자에게 카운트다운과 상태 동기화 제공.  
+- **교훈**:  
+  - Redis는 단순 캐시가 아니라 **실시간 상태 관리** 도구로 쓸 수 있다.  
+  - 409/410/422 같은 에러 코드도 도메인 로직에선 정상 시나리오가 될 수 있다.  
+  - FE-Backend 동기화 없이는 데이터 정합성이 깨진다.
+
+---
+
+### 3. 관측성과 성능 가시화 (W1 D05)
+- **Micrometer Observation**으로 DB/Redis 호출까지 자식 span으로 기록.  
+- **MDC TraceId 로깅**으로 Jaeger trace와 로그를 매칭.  
+- **Grafana 대시보드**에 Hold/Confirm 성공률, p95 레이턴시, 에러율 패널 추가.  
+- **교훈**: 추상적 메트릭(Grafana)과 구체적 실행 흐름(Jaeger)을 함께 보면 시스템을 **하나의 생명체처럼** 이해할 수 있다.
+
+---
+
+### 4. MSA 전환 & FE 데이터 캐싱 (W2 D06)
+- Monolith → **Catalog/Reservation 모듈 분리**, API_BASE 이원화.  
+- FE에 **TanStack Query** 캐시 키 설계 적용 → invalidateQueries로 좌석맵만 갱신.  
+- Redis TTL 기반 동시성 제어를 MSA 구조로도 유지.  
+- **교훈**: MSA 전환은 기능 추가보다 **동등 기능 유지**가 관건. 작은 CORS/BASE 설정 차이도 대장애가 된다.
+
+---
+
+### 5. 주문/결제 플로우 & SSE 안정화 (W2 D07~D08)
+- **Outbox 패턴**으로 Kafka 발행 보장, 실패 시 재처리 가능.  
+- **Idempotency-Key**로 중복 주문 방지.  
+- **다좌석 주문** 지원, FE CartDrawer와 연동.  
+- **SSE Last-Event-ID**로 재연결 시 이벤트 누락 방지.  
+- **Saga + Payment 연계** → Order → Payment → Reservation → Catalog → FE SSE까지 end-to-end 확인.  
+- **교훈**:  
+  - 분산 환경에서 **멱등성과 이벤트 재처리**가 핵심이다.  
+  - 작은 버그(Emitter completed)가 실시간성 신뢰도 전체를 무너뜨린다.  
+  - Polling도 가능하지만, 실시간 업데이트는 결국 SSE/WS가 정석이다.
+
+---
+
+### 6. 트레이스 전파와 한계 (W2 D08 중간점검)
+- Kafka Headers 기반 traceparent 추출/전파 시도, Micrometer/OTel 연계 실험.  
+- Scheduler 기반 Worker는 trace context가 끊겨 backlog 발생.  
+- **교훈**: 완벽한 end-to-end trace는 쉽지 않다. **TraceId 로그 기반 모니터링**이 현실적 대안일 수 있다.
+
+---
+
+### 7. API 계약 고정 (API.md, Day01 9/13)
+- **오류 표준화**, **Idempotency-Key 헤더**, **Trace-Id 응답 헤더**를 계약 수준에서 문서화.  
+- **교훈**: 계약이 흔들리면 FE/BE 동시 개발이 불가능하다. **계약 우선 원칙**이 프로젝트 성공의 전제였다.
+
+---
+
+### 8. EC2 배포 및 CI/CD (Day02~Day03)
+- **EC2 t3.medium**에 Docker Compose 배포.  
+- **GHCR 이미지 빌드 & pull** 파이프라인 구축.  
+- **GitHub Actions CI/CD** → main push 시 자동 빌드/배포.  
+- **교훈**:  
+  - `localhost` 대신 **서비스명:포트**로 컨테이너 간 통신해야 한다.  
+  - SSE 프록시는 단순 버퍼링 해제만으로는 부족, Nginx에 세부 옵션이 필요하다.  
+  - CI/CD는 단순 자동화가 아니라 **Fail-safe(알림/롤백)**까지 포함해야 실용적이다.
+
+---
+
+### 9. 부하 테스트 & 병목 분석 (Day04~Day05)
+- **k6 50~1000 VU 테스트** → DB is-sold 쿼리 직렬화가 병목.  
+- max_connections 조정에도 한계, p95 9s 이상, 실패율 90% 이상.  
+- **DB → Redis-only 전환**, SSE publish 비동기화로 API 응답 단축.  
+- 최종적으로 **~1.4s 안정화** 달성.  
+- **교훈**:  
+  - 단순 커넥션 풀 확대는 한계가 있다. **DB 의존 제거**가 핵심.  
+  - Redis Lua도 단일 병목이 될 수 있으므로 튜닝이 필요하다.  
+  - 응답성 개선은 단순 속도 문제가 아니라 **UX 신뢰성** 문제다.  
+  - 부하테스트는 항상 **가장 오래 걸린 구간**을 기준으로 병목을 잡아야 한다.
+
+---
+
+## 최종 총괄
+- **동시성 제어**: DB 트랜잭션만으로는 부족, Redis TTL/Lua가 유일한 답.  
+- **사가 오케스트레이션**: Payment는 응답만, Order가 보상 책임을 갖는 분리 설계.  
+- **관측성**: Jaeger+Grafana+로그 TraceId로 “보이는 서비스”를 구현.  
+- **배포 현실성**: Kubernetes까지는 못 갔지만, EC2+Compose+CI/CD로도 충분히 학습/데모 가능.  
+- **계약 우선**: Idempotency-Key, Trace-Id, 표준 오류 바디 같은 계약이 프로젝트 품질을 지탱.  
+- **성능 튜닝**: 병목은 항상 존재. DB → Redis → SSE 최적화로 점진적으로 해결.  
+
+👉 결론적으로, 이 프로젝트는 단순 기능 구현을 넘어서 **실제 대규모 동시성 서비스가 직면하는 문제와 그 해결 방법**을 몸으로 체득한 경험이었다.
 
 ---
