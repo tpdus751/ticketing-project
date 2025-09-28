@@ -62,10 +62,10 @@
 
 ### 🔹 공통 규약
 - **Base URL**
-  - Catalog: `http://3.39.21.47/ticketing/catalog/api/...`
-  - Reservation: `http://3.39.21.47/ticketing/reservation/api/...`
-  - Order: `http://3.39.21.47/ticketing/order/api/...`
-  - Payment: `http://3.39.21.47/ticketing/payment/api/...`
+  - Catalog: `http://<EC2 Public IP>/ticketing/catalog/api/...`
+  - Reservation: `http://<EC2 Public IP>/ticketing/reservation/api/...`
+  - Order: `http://<EC2 Public IP>/ticketing/order/api/...`
+  - Payment: `http://<EC2 Public IP>/ticketing/payment/api/...`
 
 - **오류 응답 바디 (표준)**
 ```json
@@ -83,7 +83,7 @@
 ---
 
 ### 🔹 Catalog 모듈
-**Base URL:** `http://3.39.21.47/ticketing/catalog/api`
+**Base URL:** `http://<EC2 Public IP>/ticketing/catalog/api`
 
 - **이벤트**
   - `GET /events` → 이벤트 목록 조회
@@ -100,7 +100,7 @@
 ---
 
 ### 🔹 Reservation 모듈
-**Base URL:** `http://3.39.21.47/ticketing/reservation/api`
+**Base URL:** `http://<EC2 Public IP>/ticketing/reservation/api`
 
 - `POST /reservations` → 좌석 홀드  
 - `POST /reservations/{eventId}/{seatId}/extend` → 홀드 연장  
@@ -109,7 +109,7 @@
 ---
 
 ### 🔹 Order 모듈
-**Base URL:** `http://3.39.21.47/ticketing/order/api`
+**Base URL:** `http://<EC2 Public IP>/ticketing/order/api`
 
 - `POST /orders`  
   Header: `Idempotency-Key` 필수 → 주문 생성  
@@ -119,7 +119,7 @@
 ---
 
 ### 🔹 Payment 모듈
-**Base URL:** `http://3.39.21.47/ticketing/payment/api`
+**Base URL:** `http://<EC2 Public IP>/ticketing/payment/api`
 
 - `POST /payments/authorize`  
   모의 결제 (랜덤 지연 + 80:20 성공/실패)  
@@ -129,7 +129,7 @@
 ### 🔹 Health Check
 - 모든 모듈 공통:  
   `GET /actuator/health`  
-  예시: `http://3.39.21.47/ticketing/catalog/actuator/health`
+  예시: `http://<EC2 Public IP>/ticketing/catalog/actuator/health`
 
 응답 예시:
 ```json
