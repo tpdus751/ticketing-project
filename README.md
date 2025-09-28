@@ -46,45 +46,79 @@
 ---
 
 ## 🏗️ 아키텍처
-## 🏗️ 아키텍처
 ```mermaid
 flowchart LR
- subgraph Client["🖥️ Client (브라우저, React/Vite)"]
-        FE["Frontend (React 18 + Vite + pnpm)\nTanStack Query, Zustand, SSE"]
-  end
- subgraph BE["Spring Boot Microservices"]
+    %% ======================
+    %% Client
+    %% ======================
+    subgraph Client["🖥️ Client"]
+        FE["Frontend (React 18 + Vite)\nTanStack Query, Zustand, SSE"]
+    end
+
+    %% ======================
+    %% Gateway
+    %% ======================
+    Nginx["Nginx Reverse Proxy\n(/ticketing/*)"]
+
+    %% ======================
+    %% Services
+    %% ======================
+    subgraph BE["Spring Boot Microservices"]
         C["Catalog Service :8080\n(이벤트/좌석 조회 + SSE)"]
         R["Reservation Service :8081\n(좌석 Hold/Confirm, Redis TTL)"]
         O["Order Service :8082\n(주문, Outbox + Idempotency)"]
         P["Payment Service :8083\n(모의 결제, Saga 보상)"]
-  end
- subgraph Infra["Infra & Monitoring"]
-        MySQL[("MySQL 8 - ticketing-db")]
-        Redis[("Redis 7 - TTL + Lua seat hold")]
+    end
+
+    %% ======================
+    %% Infra
+    %% ======================
+    subgraph Infra["Infra"]
+        MySQL[("MySQL 8\n(ticketing-db)")]
+        Redis[("Redis 7\nTTL + Lua seat hold")]
         Kafka[("Kafka 7.6 + Zookeeper")]
-        Jaeger[("Jaeger :16686 - Tracing")]
-        Prometheus[("Prometheus :9090 - Metrics")]
-        Grafana["Grafana :3000 - Dashboards"]
-  end
- subgraph EC2["☁️ AWS EC2 (Docker Compose + Nginx)"]
-        Nginx["Nginx\nReverse Proxy (/ticketing/*)"]
-        BE
-        Infra
-  end
-    FE -- HTTP/SSE --> Nginx
-    Nginx -- REST --> C
-    Nginx --> R & O & P
-    C --> MySQL & Jaeger & Prometheus
-    R --> Redis & MySQL & Kafka & Jaeger & Prometheus
-    O --> MySQL & Kafka & Jaeger & Prometheus
-    Kafka --> O & R
-    P --> Jaeger & Prometheus
+    end
+
+    %% ======================
+    %% Observability
+    %% ======================
+    subgraph Obs["Observability"]
+        Jaeger[("Jaeger :16686\nTracing")]
+        Prometheus[("Prometheus :9090\nMetrics")]
+        Grafana["Grafana :3000\nDashboards"]
+    end
+
+    %% ======================
+    %% Flows
+    %% ======================
+    FE -->|HTTP/SSE| Nginx
+    Nginx --> C
+    Nginx --> R
+    Nginx --> O
+    Nginx --> P
+
+    %% Services to Infra
+    C --> MySQL
+    R --> Redis
+    R --> MySQL
+    O --> MySQL
+    O --> Kafka
+    R --> Kafka
+    Kafka --> O
+    Kafka --> R
+
+    %% Observability
+    C --> Jaeger
+    R --> Jaeger
+    O --> Jaeger
+    P --> Jaeger
+
+    C --> Prometheus
+    R --> Prometheus
+    O --> Prometheus
+    P --> Prometheus
+
     Prometheus --> Grafana
-    linkStyle 0 stroke:#2ecc71,stroke-width:2px,fill:none
-    linkStyle 1 stroke:#3498db,stroke-width:2px,fill:none
-    linkStyle 2 stroke:#f1c40f,stroke-width:2px,fill:none
-    linkStyle 3 stroke:#e67e22,stroke-width:2px,fill:none
-    linkStyle 4 stroke:#9b59b6,stroke-width:2px,fill:none
 
 ```
 🛠️ 기술 스택
