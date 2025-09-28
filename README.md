@@ -33,7 +33,7 @@
 ---
 
 ## 아키텍처
-![Architecture](./docs/images/architecture.png)
+<img width="3840" height="1807" alt="티켓팅 프로젝트 아키텍처" src="https://github.com/user-attachments/assets/16ac1f9a-df29-4135-b13c-5c2ca17517c5" />
 
 ---
 
