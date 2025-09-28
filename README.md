@@ -55,6 +55,8 @@
   { "code":"RESERVATION_CONFLICT", "message":"...", "traceId":"..." }
   ```
 
+---
+
 ## 📄 API Contracts (v1.0 – EC2 + Nginx 환경)
 
 ### 🔹 공통 규약
