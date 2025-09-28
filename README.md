@@ -1,4 +1,4 @@
-<img width="1918" height="554" alt="image" src="https://github.com/user-attachments/assets/916d42e4-6797-46d3-ae36-a38918adc7ff" /># 🎟️ 초고동시성 티켓 예매 시스템 (Ticketing Project)
+# 🎟️ 초고동시성 티켓 예매 시스템 (Ticketing Project)
 
 > **목표**  
 > 동시 다발적인 좌석 클릭에도 **oversell 없이** 안정적으로 예약/주문/결제를 처리하는 백엔드 중심 학습 프로젝트.  
