@@ -227,22 +227,48 @@ https://github.com/user-attachments/assets/17d0211e-2712-4a98-8759-69cf3e6f6b64
 - Compose는 `image: ghcr.io/...:latest`로 원클릭 기동.
 
 ### 3) Nginx 리버스 프록시(요약)
-```nginx
-location /ticketing/catalog/      { proxy_pass http://catalog/; }
-location /ticketing/order/        { proxy_pass http://order_svc/; }
-location /ticketing/payment/      { proxy_pass http://payment/; }
-location /ticketing/reservation/  { proxy_pass http://reservation/; }
 
-proxy_buffering off;
-proxy_read_timeout 3600s;
-proxy_set_header Connection '';
-```
+```Nginx
+location /ticketing/catalog/ {
+  proxy_pass http://catalog/ticketing/;
+  proxy_http_version 1.1;
+  proxy_set_header Connection '';
+  proxy_set_header Cache-Control 'no-cache';
+
+  proxy_buffering off;
+  proxy_cache off;
+  chunked_transfer_encoding off;
+  add_header X-Accel-Buffering no;
+
+  proxy_read_timeout 3600s;
+  proxy_send_timeout 3600s;
+}
+
+location /ticketing/reservation/ {
+  proxy_pass http://reservation/ticketing/;
+}
+
+location /ticketing/order/ {
+  proxy_pass http://order/ticketing/;
+}
+
+location /ticketing/payment/ {
+  proxy_pass http://payment/ticketing/;
+}
+
+# Health check
+location /healthz {
+  return 200 'ok';
+  add_header Content-Type text/plain;
+}
+[여기까지 코드블록 끝]
 ## CI/CD (GitHub Actions)
 
 - **CI**: PR마다 **빌드 → 테스트 → 이미지 빌드**까지 수행.  
 - **CD**: main 머지 시 이미지 푸시(GHCR) 후,  
   EC2에서 `docker compose pull && docker compose up -d`로 롤링.  
 - **실패 대비**: 롤백은 이전 태그로 `docker compose up -d` 재기동.
+```
 
 ---
 
