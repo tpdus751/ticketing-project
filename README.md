@@ -1,4 +1,4 @@
-# 🎟️ 초고동시성 티켓 예매 시스템 (Ticketing Project)
+<img width="1918" height="554" alt="image" src="https://github.com/user-attachments/assets/916d42e4-6797-46d3-ae36-a38918adc7ff" /># 🎟️ 초고동시성 티켓 예매 시스템 (Ticketing Project)
 
 > **목표**  
 > 동시 다발적인 좌석 클릭에도 **oversell 없이** 안정적으로 예약/주문/결제를 처리하는 백엔드 중심 학습 프로젝트.  
@@ -204,13 +204,15 @@ https://github.com/user-attachments/assets/17d0211e-2712-4a98-8759-69cf3e6f6b64
 
 ---
 
-## 성능 & 관측(사실 위주)
+## 성능 & 관측
+<img width="1913" height="1067" alt="W01 D03 image k6 result" src="https://github.com/user-attachments/assets/825ca4f0-9c74-4c25-90bb-524b643fb44e" />
 - **부하 테스트(k6)**: 좌석 다중 클릭/주문 흐름에서 **oversell 0건**을 목표로 반복 점검.
-- DB 경합을 제거하고 Redis-only 흐름으로 단순화했을 때 성능이 개선됨을 확인.
+<img width="1918" height="554" alt="image" src="https://github.com/user-attachments/assets/c26c57bf-3a33-4de7-b585-b780b2c86f2d" />
+<img width="1916" height="557" alt="image" src="https://github.com/user-attachments/assets/40135de6-d74d-402a-9cc1-3ad5aba482b2" />
+- **Jaeger(분산추적)**: OpenTelemetry 연동, DB 경합을 제거하고 Redis-only 흐름으로 단순화했을 때 성능이 개선됨을 확인.
 - **p95**: 시나리오/환경에 따라 변동 (목표 300ms 이하).
+<img width="1545" height="1032" alt="image" src="https://github.com/user-attachments/assets/762632d5-a032-4c1c-8fb2-106e3e8a05a1" />
 - **Prometheus/Grafana**: 기본 JVM/HTTP 메트릭 수집 및 대시보드 구성.
-- **Jaeger(분산추적)**: OpenTelemetry 연동 시도. 일부 스팬은 보이나,  
-  “주문 1건 전체 체인”의 완전한 단일 Trace 연결은 미완(추후 보완 예정).
 
 ---
 
