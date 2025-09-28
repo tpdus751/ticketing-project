@@ -49,55 +49,46 @@
 ```mermaid
 flowchart LR
     %% ======================
-    %% Client
+    %% Client (Local)
     %% ======================
-    subgraph Client["🖥️ Client"]
-        FE["Frontend (React 18 + Vite)\nTanStack Query, Zustand, SSE"]
+    subgraph Local["💻 Local Environment"]
+        FE["Frontend (React 18 + Vite + pnpm)\nTanStack Query, Zustand, SSE"]
     end
 
     %% ======================
-    %% Gateway
+    %% AWS EC2
     %% ======================
-    Nginx["Nginx Reverse Proxy\n(/ticketing/*)"]
+    subgraph EC2["☁️ AWS EC2 (Docker Compose + Nginx)"]
+        Nginx["Nginx\nReverse Proxy (/ticketing/*)"]
 
-    %% ======================
-    %% Services
-    %% ======================
-    subgraph BE["Spring Boot Microservices"]
-        C["Catalog Service :8080\n(이벤트/좌석 조회 + SSE)"]
-        R["Reservation Service :8081\n(좌석 Hold/Confirm, Redis TTL)"]
-        O["Order Service :8082\n(주문, Outbox + Idempotency)"]
-        P["Payment Service :8083\n(모의 결제, Saga 보상)"]
+        %% Microservices
+        subgraph BE["Spring Boot Microservices"]
+            C["Catalog :8080\n(이벤트/좌석 조회 + SSE)"] 
+            R["Reservation :8081\n(좌석 Hold/Confirm, Redis TTL)"] 
+            O["Order :8082\n(주문, Outbox + Idempotency)"] 
+            P["Payment :8083\n(모의 결제, Saga 보상)"] 
+        end
+
+        %% Infra
+        subgraph Infra["Infra & Monitoring"]
+            MySQL[("MySQL 8\n(ticketing-db)")]
+            Redis[("Redis 7\nTTL + Lua seat hold")]
+            Kafka[("Kafka 7.6\n+ Zookeeper")]
+            Jaeger[("Jaeger :16686\nTracing")]
+            Prometheus[("Prometheus :9090\nMetrics")]
+            Grafana["Grafana :3000\nDashboards"]
+        end
     end
 
     %% ======================
-    %% Infra
+    %% Connections
     %% ======================
-    subgraph Infra["Infra"]
-        MySQL[("MySQL 8\n(ticketing-db)")]
-        Redis[("Redis 7\nTTL + Lua seat hold")]
-        Kafka[("Kafka 7.6 + Zookeeper")]
-    end
-
-    %% ======================
-    %% Observability
-    %% ======================
-    subgraph Obs["Observability"]
-        Jaeger[("Jaeger :16686\nTracing")]
-        Prometheus[("Prometheus :9090\nMetrics")]
-        Grafana["Grafana :3000\nDashboards"]
-    end
-
-    %% ======================
-    %% Flows
-    %% ======================
-    FE -->|HTTP/SSE| Nginx
-    Nginx --> C
+    FE -- HTTP/SSE --> Nginx
+    Nginx -- REST --> C
     Nginx --> R
     Nginx --> O
     Nginx --> P
 
-    %% Services to Infra
     C --> MySQL
     R --> Redis
     R --> MySQL
@@ -120,8 +111,15 @@ flowchart LR
 
     Prometheus --> Grafana
 
+    %% ======================
+    %% Styling (main flows colored)
+    %% ======================
+    linkStyle 0 stroke:#2ecc71,stroke-width:2px,fill:none  %% FE → Nginx
+    linkStyle 1 stroke:#3498db,stroke-width:2px,fill:none  %% Nginx → Catalog
+    linkStyle 2 stroke:#f1c40f,stroke-width:2px,fill:none  %% Nginx → Reservation
+    linkStyle 3 stroke:#e67e22,stroke-width:2px,fill:none  %% Nginx → Order
+    linkStyle 4 stroke:#9b59b6,stroke-width:2px,fill:none  %% Nginx → Payment
 ```
-🛠️ 기술 스택
 Backend: Java 21, Spring Boot 3.3, JPA, Redis 7, Kafka 7.6, MySQL 8
 
 Frontend: React 18, TypeScript, Vite, TailwindCSS, shadcn/ui, TanStack Query, Zustand
